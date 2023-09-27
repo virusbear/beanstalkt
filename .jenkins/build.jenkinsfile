@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+
+    options {
+        timestamps()
+    }
+
+    stages {
+        stage("Ensure gradlew executable") {
+            steps {
+                sh 'chmod +x gradlew'
+            }
+        }
+        stage("Build") {
+            steps {
+                withGradle {
+                    sh './gradlew clean assemble --parallel --no-daemon'
+                }
+            }
+        }
+        stage("Checks") {
+            parallel {
+                stage("Test") {
+                    steps {
+                        withGradle {
+                            sh "./gradlew test --no-daemon"
+                        }
+                    }
+
+                    post {
+                        always {
+                            junit '**/build/test-results/**/*.xml'
+                            jacoco(
+                                execPattern: '**/build/jacoco/*.exec',
+                                classPattern: '**/build/classes/*/main',
+                                sourcePattern: '**/src/main'
+                            )
+                        }
+                    }
+                }
+                stage("Detekt") {
+                    steps {
+                        withGradle {
+                            sh "./gradlew detekt --no-daemon"
+                        }
+                    }
+
+                    post {
+                        always {
+                            recordIssues enabledForFailure: true, tools: [checkStyle(pattern: '**/build/reports/detekt/detekt.xml')]
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
