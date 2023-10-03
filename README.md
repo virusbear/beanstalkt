@@ -3,7 +3,7 @@
 ![Kotlin](https://img.shields.io/badge/kotlin-1.9.0-blue.svg?logo=kotlin)
 ![GitHub](https://img.shields.io/github/license/virusbear/beanstalkt)
 <!---![Maven Central](https://img.shields.io/maven-central/v/com.virusbear.beanstalkt/beantalkt)-->
-<!---TODO: add code coverage, build state, test results, maven link-->
+<!---TODO: add badges for code coverage, build state, test results, maven link, kdoc-->
 
 A simple async kotlin client for [beanstalkd](https://github.com/beanstalkd/beanstalkd) work queue.
 
@@ -63,6 +63,7 @@ suspend fun main() = coroutineScope {
 - [X] beanstalkd protocol completely implemented
 - [ ] Connection Pooling
 - [ ] suspending iterator similar to kotlin `Channel` implementation
+- [ ] Kotlin Multiplatform
 
 ## Using in your projects
 
