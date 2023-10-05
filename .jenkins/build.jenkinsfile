@@ -1,3 +1,5 @@
+def incrementVersionType = "NONE"
+
 pipeline {
     agent any
 
@@ -60,8 +62,6 @@ pipeline {
                     changelog '.*^\\[ci skip\\] .+$'
                 }
             }
-
-            def incrementVersionType = "PATCH"
 
             stages {
                 stage("Determine semantic version type") {
