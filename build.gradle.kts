@@ -8,6 +8,8 @@ plugins {
 group = "com.virusbear"
 version = "1.0.0"
 
+apply(plugin = "com.dipien.semantic-version")
+
 repositories {
     mavenCentral()
 }
@@ -39,6 +41,6 @@ tasks.jacocoTestReport {
 }
 
 detekt {
-    config.setFrom(rootDir.resolve("detekt.yml"))
+    config.setFrom(rootDir.resolve("detekt.yaml"))
     parallel = true
 }

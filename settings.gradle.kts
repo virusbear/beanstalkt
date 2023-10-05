@@ -6,3 +6,12 @@
  */
 
 rootProject.name = "beanstalkt"
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.dipien:semantic-version-gradle-plugin:2.0.0")
+    }
+}

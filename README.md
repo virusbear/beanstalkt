@@ -1,5 +1,6 @@
 # beanstalkt
 
+![Build Status](https://build.dev.virusbear.com/buildStatus/icon?job=beanstalkt%2Fmain)
 ![Kotlin](https://img.shields.io/badge/kotlin-1.9.0-blue.svg?logo=kotlin)
 ![GitHub](https://img.shields.io/github/license/virusbear/beanstalkt)
 <!---![Maven Central](https://img.shields.io/maven-central/v/com.virusbear.beanstalkt/beantalkt)-->

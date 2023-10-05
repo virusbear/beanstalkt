@@ -53,5 +53,26 @@ pipeline {
                 }
             }
         }
+        stage("Release") {
+            when {
+                branch 'main'
+            }
+
+            stage("Determine semantic version type") {
+
+            }
+            stage("Increment version") {
+
+            }
+            stage("Publish maven artifact") {
+
+            }
+        }
+
+
+        //TODO:
+        //deploy (main branch only?)
+        //pull request status check
+        // how to do versioning? complex script? gradle task?
     }
 }
