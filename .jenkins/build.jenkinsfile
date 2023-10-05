@@ -56,23 +56,64 @@ pipeline {
         stage("Release") {
             when {
                 branch 'main'
+                not {
+                    changelog '.*^\\[ci skip\\] .+$'
+                }
             }
 
-            stage("Determine semantic version type") {
+            def incrementVersionType = "PATCH"
 
-            }
-            stage("Increment version") {
+            stages {
+                stage("Determine semantic version type") {
+                    steps {
+                        script {
+                            def commit = sh(returnStdout: true, script = "git log --format=%B -n 1")
+                            def type = (commit =~ /^(\w*)(?:\(([\w$.\-*\\/ ]*)\))?!?: (.*)$/)[1]
 
-            }
-            stage("Publish maven artifact") {
-
+                            def versionTypes = [
+                                "fix": "PATCH",
+                                "feat": "MINOR",
+                                "docs": "NONE",
+                                "chore": "NONE",
+                                "refactor": "PATCH",
+                                "style": "PATCH",
+                                "test": "NONE",
+                                "perf": "PATCH",
+                                "ci": "NONE",
+                                "build": "NONE",
+                                "revert": "PATCH",
+                            ]
+                            incrementVersionType = versionTypes.getOrDefault(type.toString(), "NONE")
+                        }
+                    }
+                }
+                stage("Increment version") {
+                    when {
+                        not {
+                            equals expected: "NONE", actual: incrementVersionType
+                        }
+                    }
+                    steps {
+                        withGradle {
+                            sh "./gradlew incrementVersion --versionIncrementType ${}"
+                            script {
+                                def version = sh(returnStdout: true, script: "./gradlew printVersion -Psnapshot=false -q")
+                                echo "new version: ${version}"
+                            }
+                        }
+                        script {
+                            echo "TODO: push to git"
+                        }
+                    }
+                }
+                stage("Publish maven artifact") {
+                    steps {
+                        script {
+                            echo "TODO: publish maven"
+                        }
+                    }
+                }
             }
         }
-
-
-        //TODO:
-        //deploy (main branch only?)
-        //pull request status check
-        // how to do versioning? complex script? gradle task?
     }
 }
