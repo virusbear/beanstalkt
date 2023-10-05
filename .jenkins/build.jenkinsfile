@@ -15,7 +15,6 @@ pipeline {
         }
         stage("Build") {
             when {
-                branch 'main'
                 not {
                     changelog '.*^\\[ci skip\\] .+$'
                 }
@@ -29,7 +28,6 @@ pipeline {
         }
         stage("Checks") {
             when {
-                branch 'main'
                 not {
                     changelog '.*^\\[ci skip\\] .+$'
                 }
