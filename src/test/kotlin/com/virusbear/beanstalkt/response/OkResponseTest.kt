@@ -26,7 +26,10 @@ class OkResponseTest {
         val params = listOf("${requestRaw.size}")
         val channel = ByteReadChannel(yaml + "\r\n")
         val response = OkResponse.readResponse<OkResponse>(params, channel)
-        assertContentEquals(listOf("value1", "value with special - character", "value with whitespace"), response.stats.keys)
+        assertContentEquals(
+            listOf("value1", "value with special - character", "value with whitespace"),
+            response.stats.keys
+        )
     }
 
     @Test

@@ -4,7 +4,7 @@ import com.virusbear.beanstalkt.operation.*
 import com.virusbear.beanstalkt.response.*
 import kotlin.time.Duration
 
-@Suppress("SwallowedException")
+@Suppress("SwallowedException", "TooManyFunctions")
 class DefaultClient(
     host: String = "localhost",
     port: Int = 11300
