@@ -39,6 +39,6 @@ tasks.jacocoTestReport {
 }
 
 detekt {
-    config.setFrom(rootDir.resolve("detekt.yml"))
+    config.setFrom(rootDir.resolve("detekt.yaml"))
     parallel = true
 }
