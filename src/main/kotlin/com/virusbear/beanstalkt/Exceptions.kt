@@ -2,7 +2,9 @@ package com.virusbear.beanstalkt
 
 class DisconnectedException: RuntimeException("Disconnected from beanstalkd server")
 class InvalidResponseException: RuntimeException("The server responded with an invalid response")
-class UnknownResponseException(val code: String): RuntimeException("The server responded with an unknown response: $code")
+class UnknownResponseException(
+    val code: String
+): RuntimeException("The server responded with an unknown response: $code")
 
 class OutOfMemoryException: RuntimeException("Beanstalkd out of memory")
 class InternalErrorException: RuntimeException("Beanstalkd encountered an internal error")

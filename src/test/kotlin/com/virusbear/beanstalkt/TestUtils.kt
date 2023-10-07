@@ -7,7 +7,10 @@ import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import kotlin.test.assertIs
 
-internal suspend inline fun <reified T: Response> ResponseType.readResponse(params: List<String>, channel: ByteReadChannel): T {
+internal suspend inline fun <reified T: Response> ResponseType.readResponse(
+    params: List<String>,
+    channel: ByteReadChannel
+): T {
     val response = read(params, channel)
 
     assertIs<T>(response)
