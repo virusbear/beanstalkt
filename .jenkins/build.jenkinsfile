@@ -14,6 +14,12 @@ pipeline {
             }
         }
         stage("Build") {
+            when {
+                not {
+                    changelog '.*^\\[ci skip\\] .+$'
+                }
+            }
+
             steps {
                 withGradle {
                     sh './gradlew clean assemble --parallel --no-daemon'
@@ -21,6 +27,12 @@ pipeline {
             }
         }
         stage("Checks") {
+            when {
+                not {
+                    changelog '.*^\\[ci skip\\] .+$'
+                }
+            }
+
             parallel {
                 stage("Test") {
                     steps {
