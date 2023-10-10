@@ -95,7 +95,7 @@ pipeline {
                     }
                     steps {
                         withGradle {
-                            sh "./gradlew incrementVersion --versionIncrementType ${}"
+                            sh "./gradlew incrementVersion --versionIncrementType ${incrementVersionType} --no-daemon"
                             script {
                                 def version = sh(returnStdout: true, script: "./gradlew printVersion -Psnapshot=false -q")
                                 echo "new version: ${version}"
@@ -110,6 +110,13 @@ pipeline {
                     steps {
                         script {
                             echo "TODO: publish maven"
+                        }
+                    }
+                }
+                stage("Publish dokka result") {
+                    steps {
+                        withGradle {
+                            sh "./gradlew dokkaHtml --no-daemon"
                         }
                     }
                 }
