@@ -40,6 +40,7 @@ internal class DefaultConnection(
         writeChannel = socket.openWriteChannel()
     }
 
+    @Suppress("TooGenericExceptionCaught")
     override suspend fun <T> handle(operation: Operation<T>): Result<T> {
         operationQueue.send(operation)
 

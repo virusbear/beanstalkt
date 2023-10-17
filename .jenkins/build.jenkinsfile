@@ -1,3 +1,6 @@
+def incrementVersionType = "NONE"
+def newVersion = ""
+
 pipeline {
     agent any
 
@@ -12,6 +15,12 @@ pipeline {
             }
         }
         stage("Build") {
+            when {
+                not {
+                    changelog '.*^\\[ci skip\\] .+$'
+                }
+            }
+
             steps {
                 withGradle {
                     sh './gradlew clean assemble --parallel --no-daemon'
@@ -19,6 +28,12 @@ pipeline {
             }
         }
         stage("Checks") {
+            when {
+                not {
+                    changelog '.*^\\[ci skip\\] .+$'
+                }
+            }
+
             parallel {
                 stage("Test") {
                     steps {
@@ -48,6 +63,139 @@ pipeline {
                     post {
                         always {
                             recordIssues enabledForFailure: true, tools: [checkStyle(pattern: '**/build/reports/detekt/detekt.xml')]
+                        }
+                    }
+                }
+            }
+        }
+        stage("Release") {
+            when {
+                branch 'main'
+                not {
+                    changelog '.*^\\[ci skip\\] .+$'
+                }
+            }
+
+            stages {
+                stage("Determine semantic version type") {
+                    steps {
+                        script {
+                            def commit = sh returnStdout: true, script: 'git log --format=%B -n 1'
+                            def matcher = commit =~ /^(\w*)(?:\(([\w$.\-*\\\/ ]*)\))?!?: (.*)(\r?\n)*$/
+
+                            if(!matcher.matches()) {
+                                error 'commit does not match conventional commit specification'
+                            }
+
+                            def type = matcher.group(1)
+
+                            def versionTypes = [
+                                "fix": "PATCH",
+                                "feat": "MINOR",
+                                "docs": "NONE",
+                                "chore": "NONE",
+                                "refactor": "PATCH",
+                                "style": "PATCH",
+                                "test": "NONE",
+                                "perf": "PATCH",
+                                "ci": "NONE",
+                                "build": "NONE",
+                                "revert": "PATCH",
+                            ]
+                            incrementVersionType = versionTypes.getOrDefault(type.toString(), "NONE")
+                        }
+                    }
+                }
+                stage("Publishing") {
+                    when {
+                        not {
+                            equals expected: "NONE", actual: incrementVersionType
+                        }
+                    }
+
+                    stages {
+                        stage("Prepare repository") {
+                            steps {
+                                sh "git switch -C main origin/main"
+                                sh "git pull"
+                                sh "git submodule update --init"
+
+                                dir("javadoc") {
+                                    sh "git switch -C main origin/main"
+                                    sh "git pull"
+                                }
+                            }
+                        }
+
+                        stage("Increment version") {
+                            steps {
+                                withGradle {
+                                    sh "./gradlew incrementVersion --versionIncrementType ${incrementVersionType}"
+                                    script {
+                                        def output = sh returnStdout: true, script: './gradlew printVersion -Psnapshot=false -q'
+                                        def version = output.split('\n')[0]=~ /\d+\.\d+\.\d+/
+                                        if(!version.find()) {
+                                            error("Unable to find version using 'gradlew printVersion' task")
+                                        }
+
+                                        newVersion = version.group(0)
+                                    }
+                                }
+
+                                sh "git add build.gradle.kts"
+                            }
+                        }
+                        stage("Publish dokka result") {
+                            steps {
+                                withGradle {
+                                    sh "./gradlew dokkaHtml dokkaJavadoc -Psnapshot=false"
+                                }
+                                dir("javadoc") {
+                                    sh "git add ."
+                                }
+                            }
+                        }
+                        stage("Publish maven artifact") {
+                            steps {
+                                withGradle {
+                                    withCredentials([
+                                        file(credentialsId: '7d667eae-7034-49d1-9933-42bf08f886d6', variable: 'GPG_SIGNING_KEY'),
+                                        string(credentialsId: '8691cc65-8289-4798-9fe3-5c371a5b2947', variable: 'GPG_SIGNING_PASSPHRASE'),
+                                        usernamePassword(credentialsId: '9e4efbc7-f850-4558-88dd-d46cf06d6705', passwordVariable: 'OSSRH_PASSWORD', usernameVariable: 'OSSRH_USERNAME')
+                                    ]) {
+                                        sh "./gradlew publish closeAndReleaseStagingRepository -Psnapshot=false"
+                                    }
+                                }
+                            }
+                        }
+
+                        stage("Stop gradle daemon") {
+                            steps {
+                                sh "./gradlew --stop"
+                            }
+                        }
+
+                        stage("Finalize repository") {
+                            steps {
+                                dir("javadoc") {
+                                    sh "git commit -m \"[ci skip] New version ${newVersion}\" "
+                                    sh "git tag v${newVersion}"
+
+                                    withCredentials([gitUsernamePassword(credentialsId: '3af70a31-f2ac-4d73-b725-88f1c3d752a9', gitToolName: 'Default')]) {
+                                        sh "git push"
+                                        sh "git push origin v${newVersion}"
+                                    }
+                                }
+                                sh "git add javadoc"
+
+                                sh "git commit -m \"[ci skip] New version ${newVersion}\" "
+                                sh "git tag v${newVersion}"
+
+                                withCredentials([gitUsernamePassword(credentialsId: '3af70a31-f2ac-4d73-b725-88f1c3d752a9', gitToolName: 'Default')]) {
+                                    sh "git push"
+                                    sh "git push origin v${newVersion}"
+                                }
+                            }
                         }
                     }
                 }

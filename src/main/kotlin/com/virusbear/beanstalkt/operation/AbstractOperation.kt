@@ -15,7 +15,11 @@ internal abstract class AbstractOperation<T> private constructor(
             is InternalErrorResponse -> Result.failure(InternalErrorException())
             is BadFormatResponse -> Result.failure(BadFormatException())
             is UnknownCommandResponse -> Result.failure(UnknownCommandException())
-            else -> Result.failure(RuntimeException("An unknown error occurred reading response of type ${response::class.simpleName}: $response"))
+            else -> Result.failure(
+                RuntimeException(
+                    "An unknown error occurred reading response of type ${response::class.simpleName}: $response"
+                )
+            )
         }
 
     final override suspend fun read(response: Response) {
