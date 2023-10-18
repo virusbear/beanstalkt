@@ -65,38 +65,9 @@ detekt {
     parallel = true
 }
 
-tasks.getByName<DokkaTask>("dokkaHtml") {
-    val docVersionsDir = projectDir.resolve("javadoc/version")
-    val currentVersion = project.version.toString()
-    val currentDocsDir = docVersionsDir.resolve(currentVersion)
-    outputDirectory.set(currentDocsDir)
-
-    pluginConfiguration<VersioningPlugin, VersioningConfiguration> {
-        olderVersionsDir = docVersionsDir
-        version = currentVersion
-        renderVersionsNavigationOnAllPages = true
-
-        olderVersions = docVersionsDir.list()?.map { File(docVersionsDir, it) }?.filter { it.isDirectory }
-        versionsOrdering = olderVersions?.map { it.relativeTo(docVersionsDir).name }
-    }
-
-    doLast {
-        val latestDir = file("javadoc/latest")
-        latestDir.deleteRecursively()
-        currentDocsDir.copyRecursively(latestDir)
-        currentDocsDir.resolve("older").deleteRecursively()
-    }
-}
-
-val dokkaHtmlJar = tasks.register<Jar>("dokkaHtmlJar") {
+val dokkaJavadocJar = tasks.register<Jar>("dokkaJavadocJar") {
     dependsOn(tasks.dokkaHtml)
     from(tasks.dokkaHtml.flatMap { it.outputDirectory })
-    archiveClassifier.set("html-docs")
-}
-
-val dokkaJavadocJar = tasks.register<Jar>("dokkaJavadocJar") {
-    dependsOn(tasks.dokkaJavadoc)
-    from(tasks.dokkaJavadoc.flatMap { it.outputDirectory })
     archiveClassifier.set("javadoc")
 }
 
@@ -108,7 +79,6 @@ val sourcesJar = tasks.register<Jar>("sourcesJar") {
 
 artifacts {
     archives(sourcesJar)
-    archives(dokkaHtmlJar)
     archives(dokkaJavadocJar)
     archives(jar)
 }
@@ -130,7 +100,6 @@ publishing {
             version = project.version.toString()
             from(components["kotlin"])
             artifact(tasks["sourcesJar"])
-            artifact(tasks["dokkaHtmlJar"])
             artifact(tasks["dokkaJavadocJar"])
 
             pom {

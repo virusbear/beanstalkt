@@ -23,7 +23,7 @@ pipeline {
 
             steps {
                 withGradle {
-                    sh './gradlew clean assemble --parallel --no-daemon'
+                    sh './gradlew clean assemble --parallel'
                 }
             }
         }
@@ -38,7 +38,7 @@ pipeline {
                 stage("Test") {
                     steps {
                         withGradle {
-                            sh "./gradlew test --no-daemon"
+                            sh "./gradlew test"
                         }
                     }
 
@@ -56,7 +56,7 @@ pipeline {
                 stage("Detekt") {
                     steps {
                         withGradle {
-                            sh "./gradlew detekt --no-daemon"
+                            sh "./gradlew detekt"
                         }
                     }
 
@@ -106,6 +106,7 @@ pipeline {
                         }
                     }
                 }
+
                 stage("Publishing") {
                     when {
                         not {
@@ -118,12 +119,6 @@ pipeline {
                             steps {
                                 sh "git switch -C main origin/main"
                                 sh "git pull"
-                                sh "git submodule update --init"
-
-                                dir("javadoc") {
-                                    sh "git switch -C main origin/main"
-                                    sh "git pull"
-                                }
                             }
                         }
 
@@ -145,16 +140,7 @@ pipeline {
                                 sh "git add build.gradle.kts"
                             }
                         }
-                        stage("Publish dokka result") {
-                            steps {
-                                withGradle {
-                                    sh "./gradlew dokkaHtml dokkaJavadoc -Psnapshot=false"
-                                }
-                                dir("javadoc") {
-                                    sh "git add ."
-                                }
-                            }
-                        }
+
                         stage("Publish maven artifact") {
                             steps {
                                 withGradle {
@@ -169,25 +155,8 @@ pipeline {
                             }
                         }
 
-                        stage("Stop gradle daemon") {
-                            steps {
-                                sh "./gradlew --stop"
-                            }
-                        }
-
                         stage("Finalize repository") {
                             steps {
-                                dir("javadoc") {
-                                    sh "git commit -m \"[ci skip] New version ${newVersion}\" "
-                                    sh "git tag v${newVersion}"
-
-                                    withCredentials([gitUsernamePassword(credentialsId: '3af70a31-f2ac-4d73-b725-88f1c3d752a9', gitToolName: 'Default')]) {
-                                        sh "git push"
-                                        sh "git push origin v${newVersion}"
-                                    }
-                                }
-                                sh "git add javadoc"
-
                                 sh "git commit -m \"[ci skip] New version ${newVersion}\" "
                                 sh "git tag v${newVersion}"
 
@@ -200,6 +169,12 @@ pipeline {
                     }
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            sh "./gradlew --stop"
         }
     }
 }
